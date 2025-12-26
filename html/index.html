@@ -1,0 +1,1584 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Vehicle Shop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 0% 0%, #00f5a0 0%, #00d9f5 25%, #845ef7 60%, #ff6bcb 100%);
+            --glass-bg: rgba(10, 10, 20, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.16);
+            --accent-soft: rgba(255, 255, 255, 0.08);
+            --accent-strong: rgba(255, 255, 255, 0.16);
+            --text-primary: #f8f9ff;
+            --text-muted: #b5b9d6;
+            --accent: #00f5a0;
+            --accent-2: #00d9f5;
+            --danger: #ff6b6b;
+            --success: #2ecc71;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.65);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            overflow: hidden;
+            background: transparent;
+            color: var(--text-primary);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", Segoe UI, Roboto, sans-serif;
+        }
+
+        #vehicleshop-root.hidden {
+            display: none !important;
+        }
+
+        /* GENEL hidden class (sayaç için de kullanılacak) */
+        .hidden {
+            display: none !important;
+        }
+
+        #vehicleshop-root {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px;
+            z-index: 9999;
+            backdrop-filter: none;
+            background: transparent;
+        }
+
+        .vehicleshop-shell {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(340px, 390px) minmax(560px, 740px);
+            gap: 22px;
+            max-width: 1180px;
+            width: 100%;
+            padding: 20px;
+            border-radius: 32px;
+            background:
+                linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(4, 7, 18, 0.98)),
+                radial-gradient(circle at 0% 0%, rgba(0, 245, 160, 0.32), transparent 60%),
+                radial-gradient(circle at 100% 100%, rgba(132, 94, 247, 0.28), transparent 50%);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            box-shadow:
+                0 24px 80px rgba(15, 23, 42, 0.95),
+                0 0 0 1px rgba(15, 23, 42, 0.95) inset;
+            overflow: hidden;
+        }
+
+        .vehicleshop-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(circle at 10% 0%, rgba(0, 245, 160, 0.06), transparent 55%),
+                radial-gradient(circle at 90% 100%, rgba(56, 189, 248, 0.12), transparent 55%);
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        .vehicleshop-shell > * {
+            position: relative;
+            z-index: 1;
+        }
+
+        .vs-sidebar {
+            background: radial-gradient(circle at 0 0, rgba(0, 245, 160, 0.08), transparent 55%),
+                        radial-gradient(circle at 100% 100%, rgba(56, 189, 248, 0.18), transparent 55%),
+                        rgba(15, 23, 42, 0.92);
+            border-radius: 24px;
+            padding: 16px 16px 14px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            box-shadow:
+                0 20px 45px rgba(15, 23, 42, 0.9),
+                0 0 0 1px rgba(148, 163, 184, 0.3) inset;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow: hidden;
+        }
+
+        .vs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .vs-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .vs-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: linear-gradient(120deg, rgba(0, 245, 160, 0.14), rgba(0, 217, 245, 0.06));
+            border: 1px solid rgba(0, 245, 160, 0.35);
+            color: #d9fff2;
+        }
+
+        .vs-badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 12px rgba(22, 163, 74, 0.9);
+        }
+
+        .vs-title {
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .vs-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .vs-close-btn {
+            background: radial-gradient(circle at 30% 0, rgba(239, 68, 68, 0.18), transparent 55%),
+                        rgba(15, 23, 42, 0.88);
+            border-radius: 999px;
+            width: 34px;
+            height: 34px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(248, 113, 113, 0.65);
+            color: #fecaca;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(15, 23, 42, 0.9);
+            transition: all 0.15s ease-out;
+        }
+
+        .vs-close-btn span {
+            display: block;
+            font-size: 18px;
+            line-height: 1;
+            transform: translateY(-1px);
+        }
+
+        .vs-close-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(15, 23, 42, 0.95);
+            background: radial-gradient(circle at 30% 0, rgba(248, 113, 113, 0.6), transparent 55%),
+                        rgba(30, 64, 175, 0.9);
+        }
+
+        .vs-close-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 10px 20px rgba(15, 23, 42, 0.9);
+        }
+
+        .vs-search-row {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 10px;
+        }
+
+        .vs-search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .vs-search-box input {
+            width: 100%;
+            padding: 8px 10px 8px 28px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.55);
+            background: rgba(15, 23, 42, 0.95);
+            color: var(--text-primary);
+            font-size: 13px;
+            outline: none;
+            box-shadow: 0 10px 25px rgba(15, 23, 42, 0.9);
+        }
+
+        .vs-search-box input::placeholder {
+            color: rgba(148, 163, 184, 0.8);
+        }
+
+        .vs-search-icon {
+            position: absolute;
+            left: 9px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: rgba(148, 163, 184, 0.9);
+        }
+
+        .vs-filter-chip-row {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .pill-chip {
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: rgba(15, 23, 42, 0.9);
+            font-size: 11px;
+            color: var(--text-muted);
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill-chip.active {
+            border-color: rgba(0, 245, 160, 0.8);
+            background: radial-gradient(circle at 0 0, rgba(0, 245, 160, 0.3), transparent 60%),
+                        rgba(15, 23, 42, 0.95);
+            color: #e6fff7;
+            box-shadow: 0 14px 26px rgba(0, 0, 0, 0.8);
+        }
+
+        .pill-count {
+            font-size: 9px;
+            padding: 2px 6px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.9);
+            color: rgba(209, 213, 219, 0.98);
+        }
+
+.vs-list {
+    margin-top: 6px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+
+    /* Scrollbar gözükmesin ama scroll çalışsın */
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* IE / eski Edge */
+}
+
+/* Chrome, Edge, Opera, Safari için scrollbar'ı gizle */
+.vs-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+
+        .vs-vehicle-card {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 4px;
+            align-items: center;
+            padding: 7px 9px;
+            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(30, 64, 175, 0.55);
+            cursor: pointer;
+            transition: all 0.12s ease-out;
+        }
+
+        .vs-vehicle-card:hover {
+            transform: translateY(-1px);
+            border-color: rgba(0, 245, 160, 0.7);
+            box-shadow:
+                0 12px 26px rgba(15, 23, 42, 0.9),
+                0 0 0 1px rgba(15, 23, 42, 0.9) inset;
+            background: radial-gradient(circle at 0 0, rgba(0, 245, 160, 0.18), transparent 60%),
+                        rgba(15, 23, 42, 0.98);
+        }
+
+        .vs-vehicle-card.active {
+            border-color: rgba(0, 245, 160, 0.9);
+            background: radial-gradient(circle at 0 0, rgba(0, 245, 160, 0.28), transparent 60%),
+                        rgba(15, 23, 42, 0.98);
+            box-shadow:
+                0 14px 34px rgba(15, 23, 42, 0.98),
+                0 0 0 1px rgba(15, 23, 42, 0.95) inset;
+        }
+
+        .vs-vehicle-main {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .vs-vehicle-name {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .vs-vehicle-sub {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .vs-vehicle-price {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .vs-vehicle-price span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .vs-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(15, 23, 42, 0.9);
+        }
+
+        .vs-balance-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            font-size: 11px;
+        }
+
+        .vs-balance-chip span {
+            font-weight: 500;
+        }
+
+        .vs-main {
+            background: radial-gradient(circle at 0 0, rgba(15, 23, 42, 0.4), transparent 60%),
+                        radial-gradient(circle at 100% 100%, rgba(15, 23, 42, 0.7), transparent 50%),
+                        rgba(15, 23, 42, 0.98);
+            border-radius: 24px;
+            padding: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            box-shadow:
+                0 22px 50px rgba(15, 23, 42, 0.98),
+                0 0 0 1px rgba(15, 23, 42, 0.98) inset;
+            display: grid;
+            grid-template-columns: minmax(280px, 360px) minmax(260px, 1fr);
+            gap: 16px;
+        }
+
+        .vs-main-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .vs-main-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .vs-main-titleblock {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .vs-main-title {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .vs-main-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .vs-main-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(78, 205, 196, 0.8);
+            font-size: 11px;
+            color: #bbf7d0;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #4ade80;
+            box-shadow: 0 0 10px rgba(74, 222, 128, 0.9);
+        }
+
+        .status-label {
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 10px;
+        }
+
+        .vs-main-meta {
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .vs-main-meta span {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+
+        .vs-main-meta span strong {
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .vs-main-price {
+            margin-top: 2px;
+            font-size: 17px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        .vs-main-price span {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .vs-car-visual {
+            position: relative;
+            border-radius: var(--radius-xl);
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            overflow: visible;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .vs-car-image-frame {
+            position: relative;
+            border-radius: 0;
+            background: transparent;
+            height: 210px;
+            overflow: visible;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .vs-car-image-frame img {
+            max-width: 105%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .vs-car-placeholder {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .vs-car-placeholder strong {
+            color: #e5e7eb;
+        }
+
+        .vs-car-meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .vs-main-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .vs-main-right section {
+            border-radius: 18px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(51, 65, 85, 0.9);
+            padding: 10px;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.98);
+        }
+
+        .vs-main-section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .spec-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 6px;
+            font-size: 11px;
+        }
+
+        .spec-item {
+            border-radius: 10px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(51, 65, 85, 0.9);
+            padding: 7px 8px;
+        }
+
+        .spec-label {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .spec-value {
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .stat-card {
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid rgba(51, 65, 85, 0.9);
+            padding: 7px 8px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .stat-unit {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .stat-bar {
+            margin-top: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: rgba(30, 64, 175, 0.6);
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            width: 100%;
+            transform: scaleX(0.3);
+            transform-origin: left;
+            background: linear-gradient(90deg, #22c55e, #0ea5e9);
+            transition: transform 0.18s ease-out;
+        }
+
+        .vs-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .vs-actions-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        .pill-method {
+            padding: 5px 11px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.7);
+            font-size: 11px;
+            background: rgba(15, 23, 42, 0.98);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill-method.active {
+            border-color: rgba(0, 245, 160, 0.9);
+            background: radial-gradient(circle at 0 0, rgba(0, 245, 160, 0.28), transparent 60%),
+                        rgba(15, 23, 42, 0.98);
+            color: #e6fff7;
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 1);
+        }
+
+        .pill-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: #22c55e;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+        }
+
+        .vs-actions-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            border-radius: 999px;
+            padding: 8px 16px;
+            border: 1px solid transparent;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 16px 32px rgba(15, 23, 42, 0.98);
+            transition: all 0.12s ease-out;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            border-color: rgba(34, 197, 94, 0.95);
+            color: #020617;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.85),
+                0 0 0 1px rgba(34, 197, 94, 0.9) inset;
+        }
+
+        .btn-secondary {
+            background: rgba(15, 23, 42, 0.98);
+            border-color: rgba(148, 163, 184, 0.9);
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-1px);
+            box-shadow:
+                0 18px 38px rgba(15, 23, 42, 1),
+                0 0 0 1px rgba(148, 163, 184, 0.9) inset;
+            border-color: rgba(0, 245, 160, 0.75);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow:
+                0 10px 24px rgba(15, 23, 42, 0.98),
+                0 0 0 1px rgba(15, 23, 42, 0.98) inset;
+        }
+
+        .btn:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        .blink-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 999px;
+            background: var(--danger);
+            box-shadow: 0 0 10px rgba(255, 107, 107, 0.9);
+            animation: pulse 1.1s infinite alternate;
+        }
+
+        /* TEST SÜRÜŞÜ SAYAÇ OVERLAY */
+        .vs-testdrive-timer {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: rgba(7, 7, 18, 0.88);
+            border: 1px solid rgba(0, 245, 160, 0.7);
+            color: var(--text-primary);
+            font-size: 12px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.65);
+            pointer-events: none;
+        }
+
+        .vs-testdrive-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            background: var(--success);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.9);
+            animation: pulse 1.1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                transform: scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: scale(1.2);
+                opacity: 0.4;
+            }
+        }
+
+        @media (max-width: 1120px) {
+            .vehicleshop-shell {
+                grid-template-columns: 1.1fr 1.4fr;
+                max-width: 1000px;
+            }
+
+            .vs-main {
+                grid-template-columns: 1.05fr 1.15fr;
+            }
+        }
+
+        @media (max-width: 980px) {
+            #vehicleshop-root {
+                padding: 16px;
+            }
+
+            .vehicleshop-shell {
+                grid-template-columns: 1fr;
+                max-width: 720px;
+            }
+
+            .vs-main {
+                grid-template-columns: 1fr;
+            }
+
+            .vs-main-right {
+                order: -1;
+            }
+        }
+
+/* === FIT & SCROLL FIX (NUI safe) ===
+   Amaç: UI her çözünürlükte ekrana sığsın.
+   - Root artık gerektiğinde scroll alabilir (scrollbar gizli).
+   - Shell'in max-height'i viewport'a göre sınırlandı.
+   - Sağ panel (detaylar) taşarsa kendi içinde scroll olur (scrollbar gizli).
+*/
+#vehicleshop-root {
+    padding: 16px;
+    overflow: auto;
+    overscroll-behavior: contain;
+
+    /* Scrollbar gözükmesin ama scroll çalışsın */
+    scrollbar-width: none;      /* Firefox */
+    -ms-overflow-style: none;   /* IE / eski Edge */
+}
+#vehicleshop-root::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+.vehicleshop-shell {
+    max-height: calc(100vh - 32px);
+    transform: none !important;
+    transform-origin: center center;
+}
+
+/* Grid konteynerler kısaltılabilir olsun (scroll düzgün çalışsın) */
+.vs-sidebar,
+.vs-main,
+.vs-main-right {
+    min-height: 0;
+}
+
+.vs-main {
+    overflow: hidden;
+}
+
+/* Sağ panel yüksekliği taşarsa scroll */
+.vs-main-right {
+    overflow-y: auto;
+    padding-right: 4px;
+
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+.vs-main-right::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* Kart düzeni: grid yerine dikey akış (daha kompakt ve stabil) */
+.vs-vehicle-card {
+    display: flex !important;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.vs-vehicle-brand {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.vs-vehicle-tag {
+    margin-top: 2px;
+    display: inline-flex;
+    width: fit-content;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    background: rgba(2, 6, 23, 0.35);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: rgba(226, 232, 240, 0.95);
+}
+
+.vs-vehicle-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.vs-card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 10px;
+    color: rgba(148, 163, 184, 0.95);
+    opacity: 0.9;
+}
+
+/* Çok kısa ekranlarda görsel alanını küçült */
+@media (max-height: 760px) {
+    .vs-car-image-frame { height: 150px; }
+}
+
+@media (max-height: 680px) {
+    #vehicleshop-root { padding: 8px; }
+    .vehicleshop-shell { max-height: calc(100vh - 16px); }
+    .vs-car-image-frame { height: 120px; }
+}
+
+
+</style>
+</head>
+<body>
+    <div id="vehicleshop-root" class="hidden">
+        <div class="vehicleshop-shell">
+            <!-- LEFT PANEL -->
+            <aside class="vs-sidebar">
+                <header class="vs-header">
+                    <div class="vs-title-group">
+                        <span class="vs-badge">
+                            <span class="vs-badge-dot"></span>
+                            Yeni Nesil Galeri
+                        </span>
+                        <span class="vs-title">Araç Listesi</span>
+                        <span class="vs-subtitle">Soldan model seç, sağdan detaylara bak.</span>
+                    </div>
+                    <button class="vs-close-btn" id="vs-close-button">
+                        <span>×</span>
+                    </button>
+                </header>
+
+                <section class="vs-search-row">
+                    <div class="vs-search-box">
+                        <span class="vs-search-icon">🔍</span>
+                        <input id="vs-search-input" type="text" placeholder="Araç, marka veya model ara..." />
+                    </div>
+                </section>
+
+                <section class="vs-filter-chip-row" id="vs-category-chips">
+                    <!-- Dinamik kategori butonları buraya geliyor -->
+                </section>
+
+                <div class="vs-list" id="vs-vehicle-list">
+                    <!-- Araç kartları dinamik doldurulacak -->
+                </div>
+
+                <div class="vs-footer">
+                    <div class="vs-balance-chip">
+                        Nakit: <span id="vs-cash-amount">₺0</span>
+                    </div>
+                    <div class="vs-balance-chip">
+                        Banka: <span id="vs-bank-amount">₺0</span>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- RIGHT PANEL -->
+            <main class="vs-main">
+                <section class="vs-main-left">
+                    <header class="vs-main-header">
+                        <div class="vs-main-titleblock">
+                            <div class="vs-main-title" id="vs-main-name">Araç seçilmedi</div>
+                            <div class="vs-main-subtitle" id="vs-main-subtitle">Soldan bir araç seçerek başlayın.</div>
+                        </div>
+                        <div class="vs-main-price">
+                            <div id="vs-main-price">₺0</div>
+                            <span>vergiler dahil</span>
+                        </div>
+                    </header>
+
+                    <div class="vs-main-meta">
+                        <span>
+                            <strong>Marka:</strong>
+                            <span id="vs-meta-brand">-</span>
+                        </span>
+                        <span>
+                            <strong>Sınıf:</strong>
+                            <span id="vs-meta-class">-</span>
+                        </span>
+                        <span>
+                            <strong>Durum:</strong>
+                            <span id="vs-main-status-text">Hazır</span>
+                        </span>
+                    </div>
+
+                    <section class="vs-car-visual">
+                        <div class="vs-car-image-frame">
+                            <img id="vs-car-image" src="" alt="Araç Görseli" style="display: none;" />
+                            <div id="vs-car-placeholder" class="vs-car-placeholder">
+                                <strong>Görsel bulunamadı.</strong> Araç bilgileri sağda listelenmektedir.
+                            </div>
+                        </div>
+
+                        <div class="vs-car-meta-row">
+                            <span>En iyi fiyat garantisi.</span>
+                            <span>Test sürüşü ile dene.</span>
+                        </div>
+                    </section>
+                </section>
+
+                <section class="vs-main-right">
+                    <section>
+                        <div class="vs-main-section-title">Araç Özeti</div>
+                        <div class="spec-grid">
+                            <article class="spec-item">
+                                <div class="spec-label">Araç Adı</div>
+                                <div class="spec-value" id="spec-name">-</div>
+                            </article>
+                            <article class="spec-item">
+                                <div class="spec-label">Model Kodu</div>
+                                <div class="spec-value" id="spec-model">-</div>
+                            </article>
+                            <article class="spec-item">
+                                <div class="spec-label">Kasa Tipi</div>
+                                <div class="spec-value" id="spec-class">-</div>
+                            </article>
+                            <article class="spec-item">
+                                <div class="spec-label">Yakıt / Motor</div>
+                                <div class="spec-value" id="spec-engine">-</div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section>
+                        <div class="vs-main-section-title">Performans</div>
+                        <div class="stat-grid">
+                            <article class="stat-card">
+                                <div class="stat-label">Maksimum Hız</div>
+                                <div class="stat-header">
+                                    <div class="stat-value" id="stat-speed-value">0</div>
+                                    <div class="stat-unit">/10</div>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill" id="stat-speed-bar"></div>
+                                </div>
+                            </article>
+
+                            <article class="stat-card">
+                                <div class="stat-label">Frenleme</div>
+                                <div class="stat-header">
+                                    <div class="stat-value" id="stat-braking-value">0</div>
+                                    <div class="stat-unit">/10</div>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill" id="stat-braking-bar"></div>
+                                </div>
+                            </article>
+
+                            <article class="stat-card">
+                                <div class="stat-label">Hızlanma</div>
+                                <div class="stat-header">
+                                    <div class="stat-value" id="stat-acceleration-value">0</div>
+                                    <div class="stat-unit">/10</div>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill" id="stat-acceleration-bar"></div>
+                                </div>
+                            </article>
+
+                            <article class="stat-card">
+                                <div class="stat-label">Yol Tutuş</div>
+                                <div class="stat-header">
+                                    <div class="stat-value" id="stat-handling-value">0</div>
+                                    <div class="stat-unit">/10</div>
+                                </div>
+                                <div class="stat-bar">
+                                    <div class="stat-bar-fill" id="stat-handling-bar"></div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section>
+                        <div class="vs-main-section-title">İşlemler</div>
+                        <div class="vs-actions">
+                            <div class="vs-actions-left">
+                                <div>Ödeme Yöntemi</div>
+                                <div style="display:flex; gap:4px; margin-top:3px;">
+                                    <button class="pill-method active" data-method="cash" id="vs-method-cash">Nakit</button>
+                                    <button class="pill-method" data-method="bank" id="vs-method-bank">Banka</button>
+                                </div>
+                            </div>
+                            <div class="vs-actions-right">
+                                <button class="btn btn-secondary" id="vs-btn-testdrive">
+                                    Test Sürüşü
+                                </button>
+                                <button class="btn btn-primary" id="vs-btn-buy">
+                                    Satın Al
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Test sürüşü sayaç overlay -->
+    <div id="vs-testdrive-timer" class="vs-testdrive-timer hidden">
+        <span class="vs-testdrive-dot"></span>
+        <span id="vs-testdrive-timer-label">Test sürüşü: 60 sn</span>
+    </div>
+
+    <script>
+        const resourceName = typeof GetParentResourceName === 'function'
+            ? GetParentResourceName()
+            : 'susi-vehicleshop';
+
+        const rootEl = document.getElementById('vehicleshop-root');
+        const vehicleListEl = document.getElementById('vs-vehicle-list');
+        const categoryChipsEl = document.getElementById('vs-category-chips');
+        const searchInputEl = document.getElementById('vs-search-input');
+
+        const cashEl = document.getElementById('vs-cash-amount');
+        const bankEl = document.getElementById('vs-bank-amount');
+
+        const mainNameEl = document.getElementById('vs-main-name');
+        const mainSubtitleEl = document.getElementById('vs-main-subtitle');
+        const mainStatusTextEl = document.getElementById('vs-main-status-text');
+
+        const carImageEl = document.getElementById('vs-car-image');
+        const carPlaceholderEl = document.getElementById('vs-car-placeholder');
+
+        const metaBrandEl = document.getElementById('vs-meta-brand');
+        const metaClassEl = document.getElementById('vs-meta-class');
+        const metaPriceEl = document.getElementById('vs-main-price');
+
+        const statSpeedValueEl = document.getElementById('stat-speed-value');
+        const statAccelerationValueEl = document.getElementById('stat-acceleration-value');
+        const statHandlingValueEl = document.getElementById('stat-handling-value');
+        const statBrakingValueEl = document.getElementById('stat-braking-value');
+
+        const statSpeedBarEl = document.getElementById('stat-speed-bar');
+        const statAccelerationBarEl = document.getElementById('stat-acceleration-bar');
+        const statHandlingBarEl = document.getElementById('stat-handling-bar');
+        const statBrakingBarEl = document.getElementById('stat-braking-bar');
+
+        const methodCashEl = document.getElementById('vs-method-cash');
+        const methodBankEl = document.getElementById('vs-method-bank');
+
+        const btnTestDrive = document.getElementById('vs-btn-testdrive');
+        const btnBuy = document.getElementById('vs-btn-buy');
+        const btnClose = document.getElementById('vs-close-button');
+
+        const tdTimerEl = document.getElementById('vs-testdrive-timer');
+        const tdTimerLabelEl = document.getElementById('vs-testdrive-timer-label');
+        let tdTimerInterval = null;
+        let tdTimerRemaining = 0;
+
+        let vehicles = [];
+        let filteredVehicles = [];
+        let selectedIndex = -1;
+        let selectedCategory = 'all';
+        let playerMoney = { cash: 0, bank: 0 };
+        let paymentMethod = 'cash';
+
+        function formatMoney(num) {
+            num = Number(num) || 0;
+            return num.toLocaleString('tr-TR', { minimumFractionDigits: 0 });
+        }
+
+        function postNUI(name, data = {}) {
+            fetch(`https://${resourceName}/${name}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                body: JSON.stringify(data)
+            }).catch(() => {});
+        }
+
+        function openUI() {
+            rootEl.classList.remove('hidden');
+            mainStatusTextEl.textContent = 'İnceleme';
+        }
+
+        function closeUI() {
+            rootEl.classList.add('hidden');
+            postNUI('close', {});
+        }
+
+        function startTestDriveTimer(duration) {
+            duration = Number(duration) || 0;
+            if (duration <= 0) {
+                stopTestDriveTimer();
+                return;
+            }
+
+            if (tdTimerInterval) {
+                clearInterval(tdTimerInterval);
+                tdTimerInterval = null;
+            }
+
+            tdTimerRemaining = duration;
+
+            if (tdTimerEl && tdTimerLabelEl) {
+                tdTimerEl.classList.remove('hidden');
+                tdTimerLabelEl.textContent = `Test sürüşü: ${tdTimerRemaining} sn`;
+            }
+
+            tdTimerInterval = setInterval(() => {
+                tdTimerRemaining--;
+
+                if (tdTimerRemaining <= 0) {
+                    if (tdTimerLabelEl) {
+                        tdTimerLabelEl.textContent = 'Test sürüşü: 0 sn';
+                    }
+                    stopTestDriveTimer();
+                    return;
+                }
+
+                if (tdTimerLabelEl) {
+                    tdTimerLabelEl.textContent = `Test sürüşü: ${tdTimerRemaining} sn`;
+                }
+            }, 1000);
+        }
+
+        function stopTestDriveTimer() {
+            if (tdTimerInterval) {
+                clearInterval(tdTimerInterval);
+                tdTimerInterval = null;
+            }
+            if (tdTimerEl) {
+                tdTimerEl.classList.add('hidden');
+            }
+        }
+
+        btnClose.addEventListener('click', closeUI);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeUI();
+            }
+        });
+
+        function buildCategories() {
+            const cats = new Set();
+            vehicles.forEach(v => {
+                if (v.category) cats.add(v.category);
+            });
+
+            categoryChipsEl.innerHTML = '';
+
+            const makeChip = (key, label, active) => {
+                const chip = document.createElement('button');
+                chip.className = 'pill-chip' + (active ? ' active' : '');
+                chip.dataset.category = key;
+                chip.textContent = label;
+                chip.addEventListener('click', () => {
+                    selectedCategory = key;
+                    document.querySelectorAll('.pill-chip').forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    applyFilters();
+                });
+                categoryChipsEl.appendChild(chip);
+            };
+
+            makeChip('all', 'Tümü', true);
+            cats.forEach(c => makeChip(c, c.toUpperCase(), false));
+        }
+
+        function applyFilters() {
+            const query = (searchInputEl.value || '').toLowerCase().trim();
+
+            filteredVehicles = vehicles.filter(v => {
+                if (selectedCategory !== 'all' && v.category !== selectedCategory) return false;
+
+                if (query.length > 0) {
+                    const str = [
+                        v.name || '',
+                        v.brand || '',
+                        v.model || '',
+                        v.classLabel || '',
+                        v.category || ''
+                    ].join(' ').toLowerCase();
+
+                    if (!str.includes(query)) return false;
+                }
+
+                return true;
+            });
+
+            if (filteredVehicles.length > 0) {
+                selectedIndex = 0;                 // önce index
+                renderVehicleList();               // sonra liste active doğru çizilsin
+                renderSelectedVehicle(filteredVehicles[0]);
+            } else {
+                selectedIndex = -1;
+                renderVehicleList();               // listeyi temizle
+                renderSelectedVehicle(null);
+            }
+        }
+
+        function renderVehicleList() {
+            vehicleListEl.innerHTML = '';
+
+            filteredVehicles.forEach((v, idx) => {
+                const card = document.createElement('div');
+                card.className = 'vs-vehicle-card' + (idx === selectedIndex ? ' active' : '');
+                card.dataset.index = idx;
+
+                const main = document.createElement('div');
+                main.className = 'vs-vehicle-main';
+
+                const info = document.createElement('div');
+                info.className = 'vs-vehicle-info';
+
+                const titleRow = document.createElement('div');
+                titleRow.style.display = 'flex';
+                titleRow.style.justifyContent = 'space-between';
+                titleRow.style.alignItems = 'center';
+                titleRow.style.gap = '6px';
+
+                const name = document.createElement('div');
+                name.className = 'vs-vehicle-name';
+                name.textContent = v.name || v.model || 'Bilinmeyen Araç';
+
+                const price = document.createElement('div');
+                price.className = 'vs-vehicle-price';
+                price.innerHTML = `₺${formatMoney(v.price || 0)} <span>+ vergiler</span>`;
+
+                titleRow.appendChild(name);
+                titleRow.appendChild(price);
+
+                const brand = document.createElement('div');
+                brand.className = 'vs-vehicle-brand';
+                brand.textContent = v.brand || 'Marka tanımlı değil';
+
+                const tag = document.createElement('span');
+                tag.className = 'vs-vehicle-tag';
+                tag.textContent = (v.classLabel || v.category || 'Genel').toUpperCase();
+
+                info.appendChild(titleRow);
+                info.appendChild(brand);
+                info.appendChild(tag);
+
+                const meta = document.createElement('div');
+                meta.className = 'vs-vehicle-meta';
+                const m1 = document.createElement('span');
+                m1.textContent = `Hız: ${(v.stats && v.stats.speed) || 0}/10`;
+                const m2 = document.createElement('span');
+                m2.textContent = `Tutar: ₺${formatMoney(v.price || 0)}`;
+
+                meta.appendChild(m1);
+                meta.appendChild(m2);
+
+                main.appendChild(info);
+                                const footer = document.createElement('div');
+                footer.className = 'vs-card-footer';
+                const fleft = document.createElement('div');
+                fleft.textContent = v.model || '';
+                const fright = document.createElement('div');
+                fright.textContent = 'Seçmek için tıkla';
+
+                footer.appendChild(fleft);
+                footer.appendChild(fright);
+
+                card.appendChild(main);
+                card.appendChild(meta);
+                card.appendChild(footer);
+
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.vs-vehicle-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    selectVehicle(idx);
+                });
+
+                vehicleListEl.appendChild(card);
+            });
+        }
+
+        function setBar(el, value) {
+            const v = Math.max(0, Math.min(10, Number(value) || 0));
+            const scale = v / 10;
+            el.style.transform = `scaleX(${scale})`;
+        }
+
+        function renderSelectedVehicle(vehicle) {
+            if (!vehicle) {
+                mainNameEl.textContent = 'Araç bulunamadı';
+                mainSubtitleEl.textContent = 'Filtreleri değiştirerek tekrar deneyin.';
+                metaBrandEl.textContent = '-';
+                metaClassEl.textContent = '-';
+                metaPriceEl.textContent = '₺0';
+
+                statSpeedValueEl.textContent = 0;
+                statAccelerationValueEl.textContent = 0;
+                statHandlingValueEl.textContent = 0;
+                statBrakingValueEl.textContent = 0;
+
+                setBar(statSpeedBarEl, 0);
+                setBar(statAccelerationBarEl, 0);
+                setBar(statHandlingBarEl, 0);
+                setBar(statBrakingBarEl, 0);
+
+                btnBuy.disabled = true;
+                btnTestDrive.disabled = true;
+                return;
+            }
+
+            mainNameEl.textContent = vehicle.name || vehicle.model || 'Araç';
+            mainSubtitleEl.textContent = `${vehicle.brand || 'Marka tanımsız'} • ${vehicle.model || ''}`;
+            metaBrandEl.textContent = vehicle.brand || 'Bilinmeyen';
+            metaClassEl.textContent = vehicle.classLabel || vehicle.category || 'Genel';
+
+            metaPriceEl.textContent = `₺${formatMoney(vehicle.price || 0)}`;
+
+            const stats = vehicle.stats || {};
+            const speed = stats.speed || 0;
+            const accel = stats.acceleration || 0;
+            const handling = stats.handling || 0;
+            const braking = stats.braking || stats.brake || 0;
+
+            statSpeedValueEl.textContent = speed;
+            statAccelerationValueEl.textContent = accel;
+            statHandlingValueEl.textContent = handling;
+            statBrakingValueEl.textContent = braking;
+
+            setBar(statSpeedBarEl, speed);
+            setBar(statAccelerationBarEl, accel);
+            setBar(statHandlingBarEl, handling);
+            setBar(statBrakingBarEl, braking);
+
+            if (vehicle.image) {
+                let src = vehicle.image;
+
+                if (
+                    !src.startsWith('http') &&
+                    !src.startsWith('nui://') &&
+                    !src.startsWith('images/')
+                ) {
+                    src = `images/${src}`;
+                }
+
+                carImageEl.onerror = () => {
+                    carImageEl.style.display = 'none';
+                    carPlaceholderEl.style.display = 'block';
+                };
+
+                carImageEl.src = src;
+                carImageEl.style.display = 'block';
+                carPlaceholderEl.style.display = 'none';
+
+            } else if (vehicle.model) {
+                const base = String(vehicle.docsModel || vehicle.model).toLowerCase();
+                const docsUrl = `https://docs.fivem.net/vehicles/${base}.webp`;
+                const png = `images/${base}.png`;
+                const jpg = `images/${base}.jpg`;
+
+                let step = 0;
+
+                carImageEl.onerror = () => {
+                    step++;
+                    if (step === 1) {
+                        carImageEl.src = png;
+                    } else if (step === 2) {
+                        carImageEl.src = jpg;
+                    } else {
+                        carImageEl.style.display = 'none';
+                        carPlaceholderEl.style.display = 'block';
+                    }
+                };
+
+                carImageEl.src = docsUrl;
+                carImageEl.style.display = 'block';
+                carPlaceholderEl.style.display = 'none';
+            } else {
+                carImageEl.style.display = 'none';
+                carPlaceholderEl.style.display = 'block';
+            }
+
+            btnBuy.disabled = false;
+            btnTestDrive.disabled = false;
+        }
+
+        function selectVehicle(index) {
+            selectedIndex = index;
+            const v = filteredVehicles[index];
+            renderSelectedVehicle(v);
+        }
+
+        searchInputEl.addEventListener('input', () => {
+            applyFilters();
+        });
+
+        function setPaymentMethod(method) {
+            paymentMethod = method;
+            [methodCashEl, methodBankEl].forEach(el => {
+                el.classList.remove('active');
+            });
+            if (method === 'cash') {
+                methodCashEl.classList.add('active');
+            } else {
+                methodBankEl.classList.add('active');
+            }
+        }
+
+        methodCashEl.addEventListener('click', () => setPaymentMethod('cash'));
+        methodBankEl.addEventListener('click', () => setPaymentMethod('bank'));
+
+        btnTestDrive.addEventListener('click', () => {
+            if (selectedIndex < 0) return;
+            const v = filteredVehicles[selectedIndex];
+            if (!v) return;
+
+            mainStatusTextEl.textContent = 'Test sürüşü başlatılıyor...';
+            postNUI('startTestDrive', {
+                model: v.model,
+                label: v.name || v.model
+            });
+        });
+
+        btnBuy.addEventListener('click', () => {
+            if (selectedIndex < 0) return;
+            const v = filteredVehicles[selectedIndex];
+            if (!v) return;
+
+            mainStatusTextEl.textContent = 'Satın alma isteği gönderildi...';
+
+            postNUI('buyVehicle', {
+                model: v.model,
+                price: v.price,
+                paymentMethod: paymentMethod
+            });
+        });
+
+        window.addEventListener('message', (event) => {
+            const data = event.data || {};
+
+            if (data.action === 'open') {
+                stopTestDriveTimer();
+
+                vehicles = data.vehicles || [];
+                filteredVehicles = vehicles.slice();
+
+                playerMoney = data.playerMoney || { cash: 0, bank: 0 };
+                cashEl.textContent = '₺' + formatMoney(playerMoney.cash || 0);
+                bankEl.textContent = '₺' + formatMoney(playerMoney.bank || 0);
+
+                buildCategories();
+                applyFilters();
+                openUI();
+            }
+
+            if (data.action === 'updateMoney') {
+                playerMoney = data.playerMoney || playerMoney;
+                cashEl.textContent = '₺' + formatMoney(playerMoney.cash || 0);
+                bankEl.textContent = '₺' + formatMoney(playerMoney.bank || 0);
+            }
+
+            if (data.action === 'close') {
+                rootEl.classList.add('hidden');
+                stopTestDriveTimer();
+            }
+
+            if (data.action === 'testDriveTimer') {
+                if (data.state === 'start') {
+                    startTestDriveTimer(data.duration || 0);
+                } else {
+                    stopTestDriveTimer();
+                }
+            }
+
+            if (data.action === 'testDriveStatus') {
+                if (data.state === 'start') {
+                    mainStatusTextEl.textContent = 'Test sürüşü aktif';
+                } else if (data.state === 'end') {
+                    mainStatusTextEl.textContent = 'Test sürüşü sona erdi';
+                } else if (data.state === 'timeout') {
+                    mainStatusTextEl.textContent = 'Test süresi bitti';
+                } else {
+                    mainStatusTextEl.textContent = 'Hazır';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
